@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Apache-Yaalr.t
+lib/Apache/Yaalr.pm
+META.yml                                 Module meta-data (added by MakeMaker)

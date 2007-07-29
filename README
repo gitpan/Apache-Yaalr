@@ -1,0 +1,67 @@
+
+Apache-Yaalr version 0.01
+=========================
+
+--==[ This is the README file for Yaalr - Yet Another Apache Log Reader ]==--
+
+Yaalr reads an apache log and reports back on it with the following information:
+
+	1. First date found in the log 
+	2. Number of 'Hits' in the log
+	3. Number of successful requests (i.e. 200 status code) 
+	4. Number of 'Not Found' pages (i.e. 404 status code)
+	5. Unique remote hosts found in the log
+	6. Total number of bytes transfered, in Megs and Gigs
+	7. Last date found in the log
+
+Yaalr supports three types of log files:
+
+	standard: This is the default apache log file, use the -s option to parse this type of file 
+	combined: This type of log file has the referrer as well as other information combined into one
+	          log, use the -c option if you have this type of log file
+	combined with cookies: This type of log file is the same as the normal combined log file but it
+		  also has a field for cookies, use the -f option for this log type
+
+	(In the future, yaalr will go out and read your apache configuration file to determine which
+	log file format you are using - then you won't have to specify on the command line.)
+
+Options:
+	-s 	Parses a common apache log file and produces a report on the command line.  
+		Expects a file as an argument after the option.
+
+       	-c      Parses a combined apache log file and produces a report on the command line.  
+		Expects a file as an argument after the option.
+
+       	-f      Parses a combined apache log file that includes cookies and produces a report on the command line. 
+		Expects a file as an argument after the option.
+
+Example:
+
+	yaalr.pl -s /var/log/apache/access.log
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  Currently it requires Tie::Files, File::Copy, File::Temp and Getopt::Std
+
+COPYRIGHT AND LICENCE
+
+Licensed under the GPL (License information is actually carried in the header of the source file)
+
+Copyright (C) 2007 by Jeremiah Foster
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.8 or,
+at your option, any later version of Perl 5 you may have available.
+
+
