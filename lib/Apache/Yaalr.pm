@@ -1,16 +1,17 @@
 package Apache::Yaalr;
 
-# $Id: Yaalr.pm 8 2007-07-05 23:44:48Z jeremiah $
+# $Id: Yaalr.pm 9 2007-07-31 21:20:13Z jeremiah $
 
 use 5.008008;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 require Exporter;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw( @readable_httpd_conf );
-our $VERSION = '0.02.8';
+our $VERSION = '0.02.9';
 
 my (@readable_httpd_conf, @dirs);
 my @mac = qw( /etc/apache /etc/apache2 /etc/httpd /usr/local/apache2 /Library/WebServer/ );
@@ -21,11 +22,26 @@ sub new {
     return bless({}, $package);
 }
 
-sub guess {
+sub os { # operating system best guess, we'll need this later                                                         
     my $self = shift;
+    my $uname = `which uname`;
+    my @os;
+    
+    if ($uname) {
+        push @os, `uname -a` or croak "Cannot execute uname -a";
+    } elsif ($^O) {
+        push @os, "$^O unknown";
+    } else {
+        push @os, "unknown unknown";
+    }
+    return @os;
+}
 
+sub find_conf {
+    my $self = shift;
+    
     use File::Find qw(find);
-   
+    
     if ($^O =~ /darwin/) {
 	# grep for potential apache dirs on the system
 	@dirs = grep {-d} @mac;
@@ -36,7 +52,7 @@ sub guess {
 	
 	# return an array of files
 	return @readable_httpd_conf;
-    
+	
     } elsif ($^O =~ /linux/) {
 	
 	@dirs = grep {-d} @lin;
@@ -44,10 +60,10 @@ sub guess {
 	
 	find(\&httpd, @dirs);
 	find(\&apache2, @dirs);	
-
+	
 	# return an array of files
 	return @readable_httpd_conf;
-
+	
     } else {
 	die "Cannot determine operating system.";
     }
@@ -71,27 +87,28 @@ __END__
 
 =head1 NAME
 
-Apache::Yaalr - Yet Another Apache Log Reader
+Apache::Yaalr - Perl module for Yet Another Apache Log Reader
 
 =head1 SYNOPSIS
 
-  use Apache::Yaalr qw( @readable_httpd_conf );
+    use Apache::Yaalr qw( @readable_httpd_conf );
 
-  my $files = Apache::Yaalr->new;
-  my @file_array = $files->guess;
-  print, print "\n" for @file_array;
+    my $files = Apache::Yaalr->new;
+    my @config_files = $files->find_conf;
+    print, print "\n" for @file_array;
+
+    $q->os();          - a guess of the operating system using uname -a if uname exists. 
+                         Otherwise this uses $^O. If it cannot find the hostname or oper-                                          
+                         ating system, it returns unknown.    
 
 =head1 DESCRIPTION
 
-Apache::Yaalr will ultimately parse an Apache log file. Since there are a number of kinds
-of log files and a number of different versions of Apache, we need to determine if an Apache 
-web server exists on the computer we are running on. If we find an Apache web server, then 
-we try to find the configuration file and the type of log being used. Finally we will parse
-the log and report back.
-
-=head1 Methods
-
-Right now the module provides only guess()
+The goal of Yaalr (Yet Another Apache Log Reader) is to read Apache access logs and report 
+back. Since the Apache web server can have its access log in different places
+depending on operating system, Yaalr does its best to find out what type of operating 
+system is being used and then find the configuration files to extract the location of the log
+files. Along the way a lot of other potentially useful information is gathered which can also 
+be accessed through the above interface. 
 
 =head1 SEE ALSO
 
