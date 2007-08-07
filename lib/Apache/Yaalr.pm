@@ -1,6 +1,6 @@
 package Apache::Yaalr;
 
-# $Id: Yaalr.pm 9 2007-07-31 21:20:13Z jeremiah $
+# $Id: Yaalr.pm 10 2007-08-02 12:42:16Z jeremiah $
 
 use 5.008008;
 use strict;
@@ -10,12 +10,12 @@ use Carp qw(croak);
 require Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw( @readable_httpd_conf );
-our $VERSION = '0.02.9';
+our @EXPORT = qw( @potential_confs );
+our $VERSION = '0.03.0';
 
-my (@readable_httpd_conf, @dirs);
+my (@potential_confs, @dirs);
 my @mac = qw( /etc/apache /etc/apache2 /etc/httpd /usr/local/apache2 /Library/WebServer/ );
-my @lin = qw( /etc/apache /etc/apache2 /etc/httpd /usr/local/apache2 /etc/apache-perl );
+my @lin = qw( /etc/apache /etc/apache2/sites-avilable/ /etc/httpd /usr/local/apache2 /etc/apache-perl );
 
 sub new {
     my $package = shift;
@@ -37,48 +37,122 @@ sub os { # operating system best guess, we'll need this later
     return @os;
 }
 
+
+# This is for getting info from a user supplied Apache2 config file
+sub apache2_conf {
+    my $self = shift;
+    my $file = shift;
+    croak("$file does not exist.") unless (-e $file);
+    croak("$file not readable.") unless (-r $file);
+    my ($str, $line, $format);
+    my (@formats, @format_string);
+    open FH, $file or croak "Cannot open configuration file: $file";
+    
+    while (<FH>) {
+        if (/LogFormat/) {
+            push @formats, $_;
+        }
+    }
+    close FH;
+    
+    # here we need to scoop up everything in sites-available
+
+    croak("Format not found\n") unless (($#formats) >= 0) ;
+    
+    for (@formats) {
+	my @format_string = split / /, $_;
+	$format = pop @format_string;
+	$str = \@format_string;
+    }
+    return ($file, \$format, $str);
+}
+
+
+sub httpd_conf { # get LogFormat and type of log from user supplied httpd.conf file                                                                                                         
+    my $self = shift;
+    my $file = shift;
+    croak("$file does not exist.") unless (-e $file);
+    # check the basename here to make sure we have a httpd.conf file
+    my ($str, $line, $log_type, $location, $format);
+    my ( @formats, @custom, @format_string,);
+    open FH, $file or croak "Cannot open configuration file: $file";
+
+    while (<FH>) {
+        if (/LogFormat/) {
+            push @formats, $_;
+        }
+        if (/CustomLog/) {
+            push @custom, $_;
+        }
+    }
+    close FH;
+
+    croak("Format not found\n") unless (($#formats) && ($#custom) >= 0) ;
+
+    for $line (@custom) {
+        if ($line !~ /#/) {   # this is a hack, it gets commented-out lines.                                                                         
+            my ($CustomLog, $location, $log_type) = split / /, $line;
+            $log_type =~ s/ //g;
+            for (@formats) {
+                my @format_string = split / /, $_;
+                $format = pop @format_string;
+                if ($format =~ /$log_type/) {
+                    shift @format_string;
+                    $str = \@format_string;
+                    last; # no need to check further                                                                                                 
+                }
+            }
+            chomp($log_type);
+            return ($file, $log_type, $location, $str);
+        }
+    }
+}
+
 sub find_conf {
     my $self = shift;
     
     use File::Find qw(find);
-    
     if ($^O =~ /darwin/) {
-	# grep for potential apache dirs on the system
+	
+	# grep for potential apache dirs on the system - note that apache2 does things differently!!
+	# is this a job for ack? Check it out.
+	
+	
 	@dirs = grep {-d} @mac;
-	die "no suitable directories" unless @dirs;
+	croak "no suitable directories" unless @dirs;
 	
 	find(\&httpd, @dirs);
 	find(\&apache2, @dirs);	
 	
 	# return an array of files
-	return @readable_httpd_conf;
+	return @potential_confs;
 	
     } elsif ($^O =~ /linux/) {
 	
 	@dirs = grep {-d} @lin;
-	die "no suitable directories" unless @dirs;
+	croak "no suitable directories" unless @dirs;
 	
 	find(\&httpd, @dirs);
 	find(\&apache2, @dirs);	
 	
 	# return an array of files
-	return @readable_httpd_conf;
+	return @potential_confs;
 	
     } else {
-	die "Cannot determine operating system.";
+	croak "Cannot determine operating system.";
     }
 }
 
 sub httpd { 
     /^httpd.conf$/ &&
 	-r &&
-	push @readable_httpd_conf, $File::Find::name;
+	push @potential_confs, $File::Find::name;
 }
 
 sub apache2 { 
     /^apache2.conf$/ &&
 	-r &&
-	push @readable_httpd_conf, $File::Find::name;
+	push @potential_confs, $File::Find::name;
 }
 
 
@@ -91,15 +165,25 @@ Apache::Yaalr - Perl module for Yet Another Apache Log Reader
 
 =head1 SYNOPSIS
 
-    use Apache::Yaalr qw( @readable_httpd_conf );
+    use Apache::Yaalr qw( @potential_confs );
 
-    my $files = Apache::Yaalr->new;
-    my @config_files = $files->find_conf;
-    print, print "\n" for @file_array;
+    my $a = Apache::Yaalr->new();
 
-    $q->os();          - a guess of the operating system using uname -a if uname exists. 
+    # get operating system information
+    my @os = $a->os();
+
+    # Get information from an apache2 configuration
+    my ($file, $format, $str) = $a->apache2_conf("/etc/apache2/apache2.conf");
+
+    $a->os();          - a estimation of the operating system using uname -a if uname exists. 
                          Otherwise this uses $^O. If it cannot find the hostname or oper-                                          
                          ating system, it returns unknown.    
+
+    $a->apache2_conf("/etc/apache2/apache2.conf");     <= This is not yet complete EXPERIMENTAL!
+
+                       - this allows you to pass an apache2 configuration set and find out
+                         the format string from the format you are using, as well as the 
+                         type of log that has been assigned, (i.e. agent, common, combined, etc.)
 
 =head1 DESCRIPTION
 
@@ -109,6 +193,17 @@ depending on operating system, Yaalr does its best to find out what type of oper
 system is being used and then find the configuration files to extract the location of the log
 files. Along the way a lot of other potentially useful information is gathered which can also 
 be accessed through the above interface. 
+
+=head1 EXAMPLES
+
+use Apache::Yaalr qw( @potential_confs );
+
+my $a = Apache::Yaalr->new();
+my @os = $a->os();
+
+# break apart the array from $^0 or uname
+my ($os, $name, $rest) = split / /, $os[0];
+print "\n\tLocal hostname: $name\n\tOperating system: $os\n";
 
 =head1 SEE ALSO
 

@@ -1,12 +1,18 @@
 use 5.008008;
-use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
-WriteMakefile(
-    NAME              => 'Apache::Yaalr',
-    VERSION_FROM      => 'lib/Apache/Yaalr.pm', # finds $VERSION
-    PREREQ_PM         => { Template => 0}, # e.g., Module::Name => 1.1
-    ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'lib/Apache/Yaalr.pm', # retrieve abstract from module
-       AUTHOR         => 'Jeremiah Foster <jeremiah@jeremiahfoster.com>') : ()),
-);
+
+use inc::Module::Install;
+
+# Meta Data 
+name 'Apache-Yaalr';
+all_from 'lib/Apache/Yaalr.pm'; # finds $VERSION
+
+# Dependencies
+requires 'Carp' => 0;           # using 1.04
+requires 'Template' => 0;       # using 2.14
+
+# other 
+abstract_from 'lib/Apache/Yaalr.pm';
+author 'Jeremiah Foster <jeremiah@jeremiahfoster.com>';
+
+auto_install;
+WriteAll;
