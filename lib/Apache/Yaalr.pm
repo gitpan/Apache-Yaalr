@@ -1,6 +1,6 @@
 package Apache::Yaalr;
 
-# $Id: Yaalr.pm 10 2007-08-02 12:42:16Z jeremiah $
+# $Id: Yaalr.pm 13 2007-08-07 13:25:27Z jeremiah $
 
 use 5.008008;
 use strict;
@@ -11,7 +11,7 @@ require Exporter;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw( @potential_confs );
-our $VERSION = '0.03.0';
+our $VERSION = '0.03.1';
 
 my (@potential_confs, @dirs);
 my @mac = qw( /etc/apache /etc/apache2 /etc/httpd /usr/local/apache2 /Library/WebServer/ );
