@@ -1,7 +1,5 @@
 package Apache::Yaalr;
 
-# $Id: Yaalr.pm 13 2007-08-07 13:25:27Z jeremiah $
-
 use 5.008008;
 use strict;
 use warnings;
@@ -11,7 +9,7 @@ require Exporter;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw( @potential_confs );
-our $VERSION = '0.03.1';
+our $VERSION = '0.03.2';
 
 my (@potential_confs, @dirs);
 my @mac = qw( /etc/apache /etc/apache2 /etc/httpd /usr/local/apache2 /Library/WebServer/ );
@@ -56,7 +54,6 @@ sub apache2_conf {
     close FH;
     
     # here we need to scoop up everything in sites-available
-
     croak("Format not found\n") unless (($#formats) >= 0) ;
     
     for (@formats) {
@@ -175,7 +172,7 @@ Apache::Yaalr - Perl module for Yet Another Apache Log Reader
     # Get information from an apache2 configuration
     my ($file, $format, $str) = $a->apache2_conf("/etc/apache2/apache2.conf");
 
-    $a->os();          - a estimation of the operating system using uname -a if uname exists. 
+    $a->os();          - an estimation of the operating system using uname -a if uname exists. 
                          Otherwise this uses $^O. If it cannot find the hostname or oper-                                          
                          ating system, it returns unknown.    
 
@@ -202,6 +199,7 @@ my $a = Apache::Yaalr->new();
 my @os = $a->os();
 
 # break apart the array from $^0 or uname
+
 my ($os, $name, $rest) = split / /, $os[0];
 print "\n\tLocal hostname: $name\n\tOperating system: $os\n";
 
@@ -217,7 +215,7 @@ Jeremiah Foster, E<lt>jeremiah@jeremiahfoster.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Jeremiah Foster
+Copyright (C) 2007 - 2008 by Jeremiah Foster
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
