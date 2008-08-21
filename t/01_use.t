@@ -1,6 +1,7 @@
 
 use strict;
-use Test::More 'no_plan';
+use warnings;
+use Test::More tests => 6;
 
 BEGIN { use_ok('Apache::Yaalr') };
 
@@ -11,8 +12,8 @@ for my $class ( qw[Apache::Yaalr] ) {
 
 # see if we can create an object
 my $a = Apache::Yaalr->new;
-ok( defined $a );
-ok( $a->isa( 'Apache::Yaalr' )); 
+ok( defined $a, "New object created." );
+ok( $a->isa( 'Apache::Yaalr' ), "Right kind of object.");
 
-can_ok($a, 'os');
+can_ok($a, 'os' );
 can_ok($a, 'apache2_conf');
